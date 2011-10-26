@@ -1,0 +1,15 @@
+MANIFEST			This list of files
+Makefile.PL
+Build.PL
+TODO
+CHANGES
+lib/Test/DatabaseRow.pm
+t/01basic.t
+t/02throws.t
+t/03tests.t
+t/04local.t
+t/05warn.t
+t/06multiple.t
+t/07results.t
+t/08utf8.t
+META.yml

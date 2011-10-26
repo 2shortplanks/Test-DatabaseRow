@@ -1,0 +1,33 @@
+--- #YAML:1.0
+name: Test-DatabaseRow
+version: 1.04
+author:
+  - |-
+    Written by Mark Fowler L<gt>mark@twoshortplanks.comE<gt>.  Copyright
+    Profero 2003, 2004.
+  - |-
+    Some code taken from B<Test::Builder>, written by Michael Schwern.
+    Some code taken from B<Regexp::Common>, written by Damian Conway.  Neither
+    objected to it's inclusion in this module.
+  - |-
+    This program is free software; you can redistribute it and/or modify
+    it under the same terms as Perl itself.
+  - |-
+    Bugs (and requests for new features) can be reported to the open source
+    development team at Profero though the CPAN RT system:
+    L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-DatabaseRow>
+abstract: simple database tests
+license: perl
+requires:
+  DBI: 0
+  Test::Builder: 0.15
+build_requires:
+  Test::Builder::Tester: 0.09
+provides:
+  Test::Builder::DatabaseRow:
+    file: lib/Test/DatabaseRow.pm
+    version: 1.04
+  Test::DatabaseRow:
+    file: lib/Test/DatabaseRow.pm
+    version: 1.04
+generated_by: Module::Build version 0.25
