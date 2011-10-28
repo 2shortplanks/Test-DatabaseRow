@@ -1,3 +1,6 @@
+1.05  fix for 5.13+ new regualar expression stringification
+      breaking our own test suite
+
 1.04  added utf8 hack to allow data from the database to be
       marked as utf8 before it's compared to anything
 
