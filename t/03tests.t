@@ -9,6 +9,10 @@ use Test::Builder::Tester;
 
 $Test::DatabaseRow::dbh = FakeDBI->new();
 
+# cope with the fact that regular expressions changed
+# stringification syntax in 5.14
+my $DEFAULT = $] >= 5.013 ? '^' : '-xism';
+
 test_out("ok 1 - matches");
 row_ok(table => "dummy",
        where => [ dummy => "dummy" ],
@@ -124,7 +128,7 @@ test_fail(+5);
 test_diag("While checking column 'name'");
 test_diag(qq{    'fred'});
 test_diag(qq{        =~});
-test_diag(qq{    '(?-xism:rd)'});
+test_diag(qq{    '(?$DEFAULT:rd)'});
 row_ok(table => "dummy",
        where => [ dummy => "dummy" ],
        tests => [ fooid => 123,
@@ -138,7 +142,7 @@ test_fail(+8);
 test_diag("While checking column 'name'");
 test_diag(qq{    'fred'});
 test_diag(qq{        =~});
-test_diag(qq{    '(?-xism:rd)'});
+test_diag(qq{    '(?$DEFAULT:rd)'});
 test_diag("The SQL executed was:");
 test_diag("  SELECT * FROM dummy WHERE dummy = qtd<dummy>");
 test_diag("on database 'bob'");
