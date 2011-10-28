@@ -12,7 +12,7 @@ require Exporter;
 @EXPORT = qw(row_ok not_row_ok);
 
 # set the version number
-$VERSION = "1.04";
+$VERSION = "1.05";
 
 # okay, try loading Regexp::Common
 eval { require Regexp::Common; Regexp::Common->import };
