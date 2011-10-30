@@ -8,5 +8,6 @@ build_requires 'Test::Builder::Tester' => 0.09;
 
 license 'perl';
 githubmeta;
+author_tests('xt');
 
 WriteAll;
