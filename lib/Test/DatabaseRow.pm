@@ -765,8 +765,9 @@ turned on for some fields and not on for others.
 
 =head1 AUTHOR
 
-Written by Mark Fowler L<gt>mark@twoshortplanks.comE<gt>.  Copyright
-Profero 2003, 2004.
+Written by Mark Fowler L<gt>mark@twoshortplanks.comE<gt>.
+
+Copyright Profero 2003, 2004.  Copyright Mark Fowler 2011.
 
 Some code taken from B<Test::Builder>, written by Michael Schwern.
 Some code taken from B<Regexp::Common>, written by Damian Conway.  Neither
