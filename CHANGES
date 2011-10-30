@@ -1,5 +1,9 @@
-1.05  fix for 5.13+ new regualar expression stringification
+1.05  fix for 5.13.6+ new regualar expression stringification
       breaking our own test suite
+
+      move to Module::Install
+
+      Add standard Kwalitee tests and make them pass
 
 1.04  added utf8 hack to allow data from the database to be
       marked as utf8 before it's compared to anything
