@@ -15,7 +15,6 @@ require Exporter;
 $VERSION = "1.05";
 
 # okay, try loading Regexp::Common
-eval { require Regexp::Common; Regexp::Common->import };
 
 # if we couldn't load Regexp::Common then we use the one regex that I
 # copied and pasted from there that we need.  We could *always* do
@@ -23,7 +22,7 @@ eval { require Regexp::Common; Regexp::Common->import };
 # Regexp::Common when it changes and they don't have to wait for me to
 # upgrade this module too
 
-if ($@)
+unless (eval { require Regexp::Common; Regexp::Common->import; 1 })
 {
   # this regexp written by Damian Conway
   $RE{num}{real} = qr/(?:(?i)(?:[+-]?)(?:(?=[0123456789]|[.])
@@ -74,11 +73,12 @@ details in a table or not.  For more advanced testing (joins, etc) it's
 probably easier for you to roll your own tests by hand than use this
 module.
 
-Exports one test function C<row_ok>.  This tests if the first selected
-row compares to the passed specification.
+This module exports several functions.
 
-The C<row_ok> takes named attributes that control which rows in which
-table it selects, and what tests are carried out on those rows.
+=head2 row_ok
+
+The C<row_ok> function takes named attributes that control which rows
+in which table it selects, and what tests are carried out on those rows.
 
 =over 4
 
@@ -298,13 +298,13 @@ sub row_ok
   my %args = @_;
 
   # the database handle
-  $args{dbh} ||= $Test::DatabaseRow::dbh
-    or croak "No dbh passed and no default dbh set";
+  unless ($args{dbh} ||= $Test::DatabaseRow::dbh)
+    { croak "No dbh passed and no default dbh set"; }
 
   # do we need to load the Encode module?  Don't do this
   # unless we really have to
   if (($args{force_utf8} || $force_utf8) && !$INC{"Encode.pm"})
-    { eval "use Encode" }
+    { eval "use Encode; 1" or croak "Can't load Encode, but the force_utf8 value is set" }
 
   my @data;
   eval
@@ -337,10 +337,7 @@ sub row_ok
 
     # retore the original error handling
     $args{dbh}{RaiseError} = $old;
-  };
-
-  # re-throw errors from our caller's perspective
-  if ($@) { croak $@ }
+  1; } or croak $@;   # re-throw errors from our caller's perspective
 
   # store the results in the passed data structure if there is
   # one.  We can use the actual data structures as control won't
@@ -361,17 +358,11 @@ sub row_ok
       { %{ $args{store_row} } = %{ $data[0] } }
     else
     {
-      eval
-      {
-	${ $args{store_row} } = $data[0];
-      };
-
-      if ($@)
-      {
-	if ($@ =~ /Not a SCALAR reference/)
+      unless (eval { ${ $args{store_row} } = $data[0]; 1 }) {
+      	if (index($@,"Not a SCALAR reference") != -1)
           { croak "Must pass a scalar or hash reference with 'store_row'" }
         else
-	  { die $@ }
+	        { croak $@ }
       }
     }
   }
@@ -431,7 +422,7 @@ sub row_ok
   # is this a dtrt operator?  If so, call _munge_array to
   # make it into a hashref if that's possible
   if (ref $tests eq "ARRAY")
-    { eval { $tests = _munge_array($tests) }; croak $@ if $@ }
+    { eval { $tests = _munge_array($tests); 1 } or croak $@ }
 
   # check we've got a hash
   unless (ref($tests) eq "HASH")
@@ -441,7 +432,7 @@ sub row_ok
   my $data = shift @data;
 
   # now for each test
-  foreach my $oper (sort keys %$tests)
+  foreach my $oper (sort keys %{$tests})
   {
     my $valuehash = $tests->{ $oper };
 
@@ -450,7 +441,7 @@ sub row_ok
       { croak "Can't understand the argument passed in 'tests'" }
 
     # process each entry in that hashref
-    foreach my $colname (sort keys %$valuehash)
+    foreach my $colname (sort keys %{$valuehash})
     {
       # work out what we expect
       my $expect = $valuehash->{ $colname };
@@ -463,37 +454,30 @@ sub row_ok
       }
 
       # try the comparison
-      my $ok = do {
-                     # disable warnings as we might compare undef
-	             local $SIG{__WARN__} = sub {}; # $^W not work
+      unless (do {
+        # disable warnings as we might compare undef
+	      local $SIG{__WARN__} = sub {}; # $^W not work
 
-		     # do a string eval
-                     eval "\$got $oper \$expect"
-                  };
-
-      # print the error if there was an error
-      unless( $ok )
-      {
-	Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
-	Test::Builder::DatabaseRow->diag("While checking column '$colname'\n");
-        if( $oper =~ /^(eq|==)$/ )
-	{
-	  Test::Builder::DatabaseRow->_is_diag($got, $oper, $expect);
-	  _sql_diag(%args);
-	  return 0;
+	      # do a string eval
+        eval "\$got $oper \$expect"
+      }) {
+      	Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
+      	Test::Builder::DatabaseRow->diag("While checking column '$colname'\n");
+        if( $oper =~ /\A (?:eq|==) \z/x )
+      	{
+      	  Test::Builder::DatabaseRow->is_diag($got, $oper, $expect);
+      	  _sql_diag(%args);
+      	  return 0;
         }
-        else
-	{
-	  Test::Builder::DatabaseRow->_cmp_diag($got, $oper, $expect);
-	  _sql_diag(%args);
-	  return 0;
-        }
+    	  Test::Builder::DatabaseRow->cmp_diag($got, $oper, $expect);
+    	  _sql_diag(%args);
+    	  return 0;
       }
     }
   }
 
   # okay, got this far, must have been okay
-  Test::Builder::DatabaseRow->ok(1,$args{label} || "simple db test");
+  return Test::Builder::DatabaseRow->ok(1,$args{label} || "simple db test");
 }
 
 sub _munge_array
@@ -505,7 +489,7 @@ sub _munge_array
   my $newtests = {};
 
   if (@tests % 2 != 0)
-    { die "Can't understand the passed test arguments" }
+    { croak "Can't understand the passed test arguments" }
 
   # for each key/value pair
   while (@tests)
@@ -525,7 +509,7 @@ sub _munge_array
     {
       $newtests->{'=~'}{ $key } = $value;
     }
-    elsif ($value =~ /^$RE{num}{real}/)
+    elsif ($value =~ /\A $RE{num}{real} \z/x)
     {
       $newtests->{'=='}{ $key } = $value;
     }
@@ -562,7 +546,7 @@ sub _build_select
   ###
 
   my $table = $args{table}
-   or die "No 'table' passed as an argument";
+   or croak "No 'table' passed as an argument";
 
   $select .= $table . " ";
 
@@ -571,7 +555,7 @@ sub _build_select
   ###
 
   my $where = $args{where}
-   or die "No 'where' passed as an argument";
+   or croak "No 'where' passed as an argument";
 
   # convert it all to equals tests if we were using the
   # shorthand notation
@@ -582,18 +566,18 @@ sub _build_select
 
   # check we've got a hash
   unless (ref($where) eq "HASH")
-    { die "Can't understand the argument passed in 'where'" }
+    { croak "Can't understand the argument passed in 'where'" }
 
   $select .= "WHERE ";
   my @conditions;
-  foreach my $oper (sort keys %$where)
+  foreach my $oper (sort keys %{$where})
   {
     my $valuehash = $where->{ $oper };
 
     unless (ref($valuehash) eq "HASH")
-      { die "Can't understand the argument passed in 'where'" }
+      { croak "Can't understand the argument passed in 'where'" }
 
-    foreach my $field (sort keys %$valuehash)
+    foreach my $field (sort keys %{$valuehash})
     {
       # get the value
       my $value = $valuehash->{ $field };
@@ -637,7 +621,7 @@ sub _sql_diag
 
   # print out the SQL
   Test::Builder::DatabaseRow->diag("The SQL executed was:");
-  Test::Builder::DatabaseRow->diag(map { "  $_\n" } split /\n/, $args{sqls});
+  Test::Builder::DatabaseRow->diag(map { "  $_\n" } split /\n/x, $args{sqls});
 
   # print out the bound parameters
   if (@{ $args{sqlb} })
@@ -653,13 +637,38 @@ sub _sql_diag
   }
 
   # print out the database
-  Test::Builder::DatabaseRow->diag("on database '$args{dbh}{Name}'");
+  return Test::Builder::DatabaseRow->diag("on database '$args{dbh}{Name}'");
 }
+
+=head2 not_row_ok
+
+The not_row_ok is shorthand notation for "the database returned
+no rows when I executed this SQL".
+
+For example:
+
+  not_row_ok(sql => <<'SQL');
+    SELECT *
+      FROM languages
+     WHERE name = 'Java'
+  SQL
+
+Checks to see the database doesn't have any rows in the language
+table that have a name "Java".  It's exactly the same as if
+we'd written:
+
+  row_ok(sql => <<'SQL', results => 0);
+    SELECT *
+      FROM languages
+     WHERE name = 'Java'
+  SQL
+
+=cut
 
 sub not_row_ok
 {
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  row_ok(@_, results => 0);
+  return row_ok(@_, results => 0);
 }
 
 =head2 Other SQL modules
@@ -765,7 +774,7 @@ turned on for some fields and not on for others.
 
 =head1 AUTHOR
 
-Written by Mark Fowler L<gt>mark@twoshortplanks.comE<gt>.
+Written by Mark Fowler B<mark@twoshortplanks.com>
 
 Copyright Profero 2003, 2004.  Copyright Mark Fowler 2011.
 
@@ -813,46 +822,46 @@ sub diag
   return $Test->diag(@_);
 }
 
-# _cmp_diag and _is_diag were originally private functions in
+# cmp_diag and is_diag were originally private functions in
 # Test::Builder (and were written by Schwern).  In theory we could
 # call them directly there and it should make no difference but since
 # they are private functions they could change at any time (or even
 # vanish) as new versions of Test::Builder are released.  To protect
 # us from that happening we've defined them here.
 
-sub _cmp_diag {
+sub cmp_diag {
     my($self, $got, $type, $expect) = @_;
 
     $got    = defined $got    ? "'$got'"    : 'undef';
     $expect = defined $expect ? "'$expect'" : 'undef';
 
-    return $Test->diag(sprintf <<DIAGNOSTIC, $got, $type, $expect);
+    return $Test->diag(sprintf <<"DIAGNOSTIC", $got, $type, $expect);
     %s
         %s
     %s
 DIAGNOSTIC
 }
 
-sub _is_diag {
+sub is_diag {
     my($self, $got, $type, $expect) = @_;
 
     foreach my $val (\$got, \$expect) {
-        if( defined $$val ) {
+        if( defined ${$val} ) {
             if( $type eq 'eq' ) {
                 # quote and force string context
-                $$val = "'$$val'"
+                ${$val} = "'${$val}'"
             }
             else {
                 # force numeric context
-                $$val = $$val+0;
+                ${$val} = ${$val}+0;
             }
         }
         else {
-            $$val = 'NULL';
+            ${$val} = 'NULL';
         }
     }
 
-    return $Test->diag(sprintf <<DIAGNOSTIC, $got, $expect);
+    return $Test->diag(sprintf <<"DIAGNOSTIC", $got, $expect);
          got: %s
     expected: %s
 DIAGNOSTIC

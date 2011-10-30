@@ -1,7 +1,7 @@
 ---
 abstract: 'simple database tests'
 author:
-  - 'Written by Mark Fowler L<gt>mark@twoshortplanks.com>.'
+  - 'Written by Mark Fowler B<mark@twoshortplanks.com>'
 build_requires:
   ExtUtils::MakeMaker: 6.42
   Test::Builder::Tester: 0.09
