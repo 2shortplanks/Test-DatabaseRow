@@ -10,8 +10,8 @@ use Test::Builder::Tester;
 $Test::DatabaseRow::dbh = FakeDBI->new();
 
 # cope with the fact that regular expressions changed
-# stringification syntax in 5.14
-my $DEFAULT = $] >= 5.013 ? '^' : '-xism';
+# stringification syntax in 5.13.6
+my $DEFAULT = $] >= 5.01306 ? '^' : '-xism';
 
 test_out("ok 1 - matches");
 row_ok(table => "dummy",
