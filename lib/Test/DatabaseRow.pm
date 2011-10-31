@@ -67,11 +67,9 @@ Test::DatabaseRow - simple database tests
 
 =head1 DESCRIPTION
 
-This is a simple module for doing very very simple quick tests on a
-database, primarily designed to test if a row exists with the correct
-details in a table or not.  For more advanced testing (joins, etc) it's
-probably easier for you to roll your own tests by hand than use this
-module.
+This is a simple module for doing simple tests on a database, primarily
+designed to test if a row exists with the correct details in a table or
+not.
 
 This module exports several functions.
 
@@ -79,6 +77,10 @@ This module exports several functions.
 
 The C<row_ok> function takes named attributes that control which rows
 in which table it selects, and what tests are carried out on those rows.
+
+By default it performs the tests against only the first row returned
+from the database, but parameters passed to it can alter that
+behavior.
 
 =over 4
 
@@ -90,12 +92,11 @@ in the C<$Test::DatabaseRow::dbh> global variable.
 
 =item sql
 
-The sql to select the rows you want to check.  Some people may prefer
-to use the C<table> and C<where> arguments (see below) to have the
-function build their SQL dynamically for them.  This can either be
-just a plain string, or it can be an array ref of which the first
-element should contain the SQL with placeholders and the remaining
-elements will be considered bind variables
+Manually specify the SQL to select the rows you want this module to execute.
+
+This can either be just a plain string, or it can be an array ref with the
+first element containing the SQL string and any further elements containing
+bind variables that will be used to fill in placeholders.
 
   # using the plain string version
   row_ok(sql   => "SELECT * FROM contacts WHERE cid = '123'",
@@ -107,26 +108,29 @@ elements will be considered bind variables
 
 =item table
 
-If you're not using the sql option, then the name of the table the
-select should be carried out on.
+Build the SELECT statement programatically.  This parameter contains the name
+of the table the  SELECT statement should be executed against.  You cannot
+pass both a C<table> parameter and a C<sql> parameter.  If you specify
+C<table> you B<must> pass a C<where> parameter also (see below.)
 
 =item where
 
-If you're not using the sql option, then a collection of things
-that you want combined into a WHERE clause in order to select the row
+Build the SELECT statement programatically.  This parameter should contain
+options that will combine into a WHERE clause in order to select the row
 that you want to test.
 
-This is normally a hash of hashes.  It's a hashref keyed by SQL
+This options normally are a hash of hashes.  It's a hashref keyed by SQL
 comparison operators that has in turn values that are further hashrefs
 of column name and values pairs.  This sounds really complicated, but
 is quite simple once you've been shown an example.  If we could get
 get the data to test with a SQL like so:
 
-  SELECT * FROM foo
-    WHERE foo  =    'bar'     AND
-          baz  =     23       AND
-          fred LIKE 'wilma%'  AND
-          age  >=    18
+  SELECT *
+    FROM tablename
+   WHERE foo  =    'bar'
+     AND baz  =     23
+     AND fred LIKE 'wilma%'
+     AND age  >=    18
 
 Then we could have the function build that SQL like so:
 
@@ -145,9 +149,10 @@ In order to make this simpler, if you are only using '=' tests you
 may just pass an arrayref of the columnnames / values.  For example,
 just to test
 
-  SELECT * FROM tablename
-    WHERE foo  =     bar     AND
-          baz  =     23;
+  SELECT *
+    FROM tablename
+   WHERE foo = 'bar'
+     AND baz = 23;
 
 You can simply pass
 
@@ -172,15 +177,17 @@ This means the statements:
 
 Will produce:
 
-  SELECT * FROM tablename
-    WHERE foo IS NULL
+  SELECT *
+    FROM tablename
+   WHERE foo IS NULL
 
 =item tests
 
 The comparisons that you want to run between the expected data and the
 data in the first line returned from the database.  If you do not
-specify any tests then the test will simply check if I<any> row is
-returned from the database.
+specify any tests then the test will simply check if I<any> rows are
+returned from the database and will pass no matter what they actually
+contain.
 
 Normally this is a hash of hashes in a similar vein to C<where>.
 This time the outer hash is keyed by Perl comparison operators, and
