@@ -27,11 +27,11 @@ $Test::DatabaseRow::dbh = FakeDBI->new;
 
 # no table test
 throws_ok { row_ok }
-  qr/No 'table' passed as an argument/, "no table";
+  qr/No 'table' or 'sql' passed as an argument/, "no table";
 
 # no where test
 throws_ok { row_ok( table => "foo" ) }
-  qr/No 'where' passed as an argument/, "no where";
+  qr/'table' passed as an argument, but no 'where' argument/, "no where";
 
 # bad where tests
 throws_ok { row_ok( table => "foo",
@@ -111,7 +111,7 @@ sub fetchrow_hashref
 
   # return undef after the first call)
   if ($this->{called})
-    { return undef }
+    { return }
   else
     { $this->{called} = 1 }
 

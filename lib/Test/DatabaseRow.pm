@@ -1,18 +1,25 @@
 package Test::DatabaseRow;
 
+# require at least a version of Perl that is merely ancient, but not
+# prehistoric
+use 5.006;
+
 use strict;
 use warnings;
 
-use vars qw($VERSION @EXPORT @ISA %RE $force_utf8);
 use Carp;
 
 # set row_ok to be exported
 require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw(row_ok not_row_ok);
+our @ISA = qw(Exporter);
+our @EXPORT = qw(row_ok not_row_ok);
 
 # set the version number
-$VERSION = "1.05";
+our $VERSION = "1.05";
+
+# horrible, horrible global vars
+our $dbh;
+our $force_utf8;
 
 # okay, try loading Regexp::Common
 
@@ -22,12 +29,13 @@ $VERSION = "1.05";
 # Regexp::Common when it changes and they don't have to wait for me to
 # upgrade this module too
 
-unless (eval { require Regexp::Common; Regexp::Common->import; 1 })
-{
-  # this regexp written by Damian Conway
-  $RE{num}{real} = qr/(?:(?i)(?:[+-]?)(?:(?=[0123456789]|[.])
-                      (?:[0123456789]*)(?:(?:[.])(?:[0123456789]{0,}))?)
-                      (?:(?:[E])(?:(?:[+-]?)(?:[0123456789]+))|))/x;
+our %RE;
+unless (eval { require Regexp::Common; Regexp::Common->import; 1 }) {
+  $RE{num}{real} = qr/
+    (?:(?i)(?:[+-]?)(?:(?=[0123456789]|[.])
+    (?:[0123456789]*)(?:(?:[.])(?:[0123456789]{0,}))?)
+    (?:(?:[E])(?:(?:[+-]?)(?:[0123456789]+))|))
+  /x;
 }
 
 =head1 NAME
@@ -300,51 +308,42 @@ statement is executed.
 
 =cut
 
-sub row_ok
-{
+sub row_ok {
   my %args = @_;
 
-  # the database handle
-  unless ($args{dbh} ||= $Test::DatabaseRow::dbh)
+  # check the database handle was passed / we have it already
+  $args{dbh} ||= $Test::DatabaseRow::dbh;
+  unless ($args{dbh})
     { croak "No dbh passed and no default dbh set"; }
 
-  # do we need to load the Encode module?  Don't do this
-  # unless we really have to
-  if (($args{force_utf8} || $force_utf8) && !$INC{"Encode.pm"})
-    { eval "use Encode; 1" or croak "Can't load Encode, but the force_utf8 value is set" }
+  # do we need to load the Encode module?  Don't do this unless we have to
+  my $want_utf8_munging = $args{force_utf8} || $force_utf8;
+  if ($want_utf8_munging && !$INC{"Encode.pm"}) {
+    eval "use Encode; 1"
+      or croak "Can't load Encode, but force_utf8 is enabled";
+  }
 
   my @data;
-  eval
-  {
-    # all problems with the database are fatal
-    my $old = $args{dbh}{RaiseError};
-    $args{dbh}{RaiseError} = 1;
+  my ($sql, @bind);
+  eval {
+    # make all database problems fatal
+    local $args{dbh}{RaiseError} = 1;
 
     # get the SQL and execute it
-    ($args{sqls}, $args{sqlb}) = _build_select(%args);
-    my $sth = $args{dbh}->prepare($args{sqls});
-    $sth->execute(@{ $args{sqlb} });
+    ($sql, @bind) = _build_select(%args);
+    my $sth = $args{dbh}->prepare($sql);
+    $sth->execute( @bind );
 
     # store the results
-    while (1)
-    {
-      # get the data from the database
-      my $data = $sth->fetchrow_hashref;
-
-      # we done here?  No more data in database
-      last unless defined $data;
-
+    while (my ($row_data) = $sth->fetchrow_hashref) {
       # munge the utf8 flag if we need to
-      if ($args{force_utf8} || $force_utf8)
-        { Encode::_utf8_on($_) foreach values %{ $data } }
+      if ($want_utf8_munging)
+        { Encode::_utf8_on($_) foreach values %{ $row_data } }
 
       # store the data
-      push @data, $data;
+      push @data, $row_data;
     }
-
-    # retore the original error handling
-    $args{dbh}{RaiseError} = $old;
-  1; } or croak $@;   # re-throw errors from our caller's perspective
+  1 } or croak $@;
 
   # store the results in the passed data structure if there is
   # one.  We can use the actual data structures as control won't
@@ -352,79 +351,70 @@ sub row_ok
   # stuff could happen if this was a a shared variable between
   # multiple threads, but let's just hope nothing does that.
 
-  if ($args{store_rows})
-  {
+  if ($args{store_rows}) {
     croak "Must pass an arrayref in 'store_rows'"
       unless ref($args{store_rows}) eq "ARRAY";
     @{ $args{store_rows} } = @data;
   }
 
-  if ($args{store_row})
-  {
-    if (ref($args{store_row}) eq "HASH")
-      { %{ $args{store_row} } = %{ $data[0] } }
-    else
-    {
+  if ($args{store_row}) {
+    if (ref($args{store_row}) eq "HASH") {
+      %{ $args{store_row} } = %{ $data[0] };
+    } else {
       unless (eval { ${ $args{store_row} } = $data[0]; 1 }) {
       	if (index($@,"Not a SCALAR reference") != -1)
           { croak "Must pass a scalar or hash reference with 'store_row'" }
-        else
-	        { croak $@ }
+        croak $@;
       }
     }
   }
 
+  # work out what we're called
+  my $label = $args{label} || "simple db test";
+
   # perform tests on the data
 
+  # fail the test if we're running just one test and no matching row was
+  # returned
   my $nrows = @data;
-  # fail the test if we're running just one test and no matching row was returned
   if(!defined($args{min_results}) &&
      !defined($args{max_results}) &&
      !defined($args{results}) &&
-     $nrows == 0)
-  {
-    Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
-    Test::Builder::DatabaseRow->diag("No matching row returned");
-    _sql_diag(%args);
+     $nrows == 0) {
+    _fail($label,"No matching row returned");
+    _sql_diag($args{dbh}->{Name}, $sql, @bind) if _verbose(%args);
     return 0;
   }
 
   # check we got the exected number of rows back if they specified exactly
-  if(defined($args{results}) && $nrows != $args{results})
-  {
-    Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
-    Test::Builder::DatabaseRow->diag("Got the wrong number of rows back from the database.");
-    Test::Builder::DatabaseRow->diag("  got:      $nrows rows back");
-    Test::Builder::DatabaseRow->diag("  expected: $args{results} rows back");
-    _sql_diag(%args);
+  if(defined($args{results}) && $nrows != $args{results}) {
+    _fail($label, "Got the wrong number of rows back from the database.",
+                  "  got:      $nrows rows back",
+                  "  expected: $args{results} rows back");
+    _sql_diag($args{dbh}->{Name}, $sql, @bind) if _verbose(%args);
     return 0;
   }
 
   # check we got enough matching rows back
-  if(defined($args{min_results}) && $nrows < $args{min_results})
-  {
-    Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
-    Test::Builder::DatabaseRow->diag("Got too few rows back from the database.");
-    Test::Builder::DatabaseRow->diag("  got:      $nrows rows back");
-    Test::Builder::DatabaseRow->diag("  expected: $args{min_results} rows or more back");
-    _sql_diag(%args);
+  if(defined($args{min_results}) && $nrows < $args{min_results}) {
+    _fail($label,"Got too few rows back from the database.",
+                 "  got:      $nrows rows back",
+                 "  expected: $args{min_results} rows or more back");
+    _sql_diag($args{dbh}->{Name}, $sql, @bind) if _verbose(%args);
     return 0;
   }
 
   # check we got didn't get too many matching rows back
-  if(defined($args{max_results}) && $nrows > $args{max_results})
-  {
-    Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
-    Test::Builder::DatabaseRow->diag("Got too many rows back from the database.");
-    Test::Builder::DatabaseRow->diag("  got:      $nrows rows back");
-    Test::Builder::DatabaseRow->diag("  expected: $args{max_results} rows or fewer back");
-    _sql_diag(%args);
+  if(defined($args{max_results}) && $nrows > $args{max_results}) {
+    _fail($label,"Got too many rows back from the database.",
+                 "  got:      $nrows rows back",
+                 "  expected: $args{max_results} rows or fewer back");
+    _sql_diag($args{dbh}->{Name}, $sql, @bind) if _verbose(%args);
     return 0;
   }
 
   my $tests = $args{tests}
-    or return
-      Test::Builder::DatabaseRow->ok(1,$args{label} || "simple db test");
+    or return _pass($label);
 
   # is this a dtrt operator?  If so, call _munge_array to
   # make it into a hashref if that's possible
@@ -439,8 +429,7 @@ sub row_ok
   my $data = shift @data;
 
   # now for each test
-  foreach my $oper (sort keys %{$tests})
-  {
+  foreach my $oper (sort keys %{$tests}) {
     my $valuehash = $tests->{ $oper };
 
     # check it's a hashref (hopefully of colnames/expected vals)
@@ -448,14 +437,12 @@ sub row_ok
       { croak "Can't understand the argument passed in 'tests'" }
 
     # process each entry in that hashref
-    foreach my $colname (sort keys %{$valuehash})
-    {
+    foreach my $colname (sort keys %{$valuehash}) {
       # work out what we expect
       my $expect = $valuehash->{ $colname };
       my $got    = $data->{ $colname };
 
-      unless (exists($data->{ $colname }))
-      {
+      unless (exists($data->{ $colname })) {
         croak "No column '$colname' returned from sql" if $args{sql};
         croak "No column '$colname' returned from table '$args{table}'";
       }
@@ -468,27 +455,24 @@ sub row_ok
 	      # do a string eval
         eval "\$got $oper \$expect"
       }) {
-      	Test::Builder::DatabaseRow->ok(0,$args{label} || "simple db test");
-      	Test::Builder::DatabaseRow->diag("While checking column '$colname'\n");
-        if( $oper =~ /\A (?:eq|==) \z/x )
-      	{
-      	  Test::Builder::DatabaseRow->is_diag($got, $oper, $expect);
-      	  _sql_diag(%args);
+      	_fail($label,"While checking column '$colname'\n");
+        if( $oper =~ /\A (?:eq|==) \z/x ) {
+      	  _is_diag($got, $oper, $expect);
+      	  _sql_diag($args{dbh}->{Name}, $sql, @bind) if _verbose(%args);
       	  return 0;
         }
-    	  Test::Builder::DatabaseRow->cmp_diag($got, $oper, $expect);
-    	  _sql_diag(%args);
+    	  _cmp_diag($got, $oper, $expect);
+    	  _sql_diag($args{dbh}->{Name}, $sql, @bind) if _verbose(%args);
     	  return 0;
       }
     }
   }
 
   # okay, got this far, must have been okay
-  return Test::Builder::DatabaseRow->ok(1,$args{label} || "simple db test");
+  return _pass($label);
 }
 
-sub _munge_array
-{
+sub _munge_array {
   # get the array of tests
   my @tests = @{ shift() };
 
@@ -499,8 +483,7 @@ sub _munge_array
     { croak "Can't understand the passed test arguments" }
 
   # for each key/value pair
-  while (@tests)
-  {
+  while (@tests) {
     my $key   = shift @tests;
     my $value = shift @tests;
 
@@ -508,20 +491,13 @@ sub _munge_array
     # against.  This can lead to some annoying cases, but if they
     # want proper comparison they can use the non dwim mode
 
-    if (!defined($value))
-    {
+    if (!defined($value)) {
       $newtests->{'eq'}{ $key } = $value;
-    }
-    elsif (ref($value) eq "Regexp")
-    {
+    } elsif (ref($value) eq "Regexp") {
       $newtests->{'=~'}{ $key } = $value;
-    }
-    elsif ($value =~ /\A $RE{num}{real} \z/x)
-    {
+    } elsif ($value =~ /\A $Test::DatabaseRow::RE{num}{real} \z/x) {
       $newtests->{'=='}{ $key } = $value;
-    }
-    else
-    {
+    } else {
       # default to string comparison
       $newtests->{'eq'}{ $key } = $value;
     }
@@ -531,19 +507,12 @@ sub _munge_array
 }
 
 # build a sql statement
-sub _build_select
-{
+sub _build_select {
   my %args = @_;
 
-  # can we ignore all of this and just used the passed select?
-  if ($args{sql})
-  {
-    # is a multi-thingy wosit?
-    if (ref($args{sql}) eq "ARRAY")
-      { return shift @{$args{sql}}, $args{sql} }
-
-    # just return the whole sql
-    return ($args{sql}, []);
+  # was SQL manually passed?
+  if ($args{sql}) {
+    return (ref($args{sql}) eq "ARRAY") ? @{ $args{sql} } : ($args{sql});
   }
 
   my $select = "SELECT * FROM ";
@@ -553,7 +522,7 @@ sub _build_select
   ###
 
   my $table = $args{table}
-   or croak "No 'table' passed as an argument";
+   or croak "No 'table' or 'sql' passed as an argument";
 
   $select .= $table . " ";
 
@@ -562,13 +531,12 @@ sub _build_select
   ###
 
   my $where = $args{where}
-   or croak "No 'where' passed as an argument";
+   or croak "'table' passed as an argument, but no 'where' argument";
 
   # convert it all to equals tests if we were using the
   # shorthand notation
-  if (ref $where eq "ARRAY")
-  {
-    $where = { "=" => { @{$where} }, };
+  if (ref $where eq "ARRAY") {
+    $where = { "=" => { @{$where} } };
   }
 
   # check we've got a hash
@@ -577,74 +545,31 @@ sub _build_select
 
   $select .= "WHERE ";
   my @conditions;
-  foreach my $oper (sort keys %{$where})
-  {
+  foreach my $oper (sort keys %{$where}) {
     my $valuehash = $where->{ $oper };
 
     unless (ref($valuehash) eq "HASH")
       { croak "Can't understand the argument passed in 'where'" }
 
-    foreach my $field (sort keys %{$valuehash})
-    {
+    foreach my $field (sort keys %{$valuehash}) {
       # get the value
       my $value = $valuehash->{ $field };
 
       # should this be "IS NULL" rather than "= ''"
-      if ($oper eq "=" && !defined($value))
-      {
-	push @conditions, "$field IS NULL";
-      }
-      elsif (!defined($value))
-      {
-	# just an undef.  I hope $oper is "IS" or "IS NOT"
-	push @conditions, "$field $oper NULL";
-      }
-      else
-      {
-	# proper value, quote it properly
-	push @conditions, "$field $oper ".$args{dbh}->quote($value);
+      if ($oper eq "=" && !defined($value)) {
+      	push @conditions, "$field IS NULL";
+      } elsif (!defined($value)) {
+      	# just an undef.  I hope $oper is "IS" or "IS NOT"
+      	push @conditions, "$field $oper NULL";
+      } else {
+      	# proper value, quote it properly
+      	push @conditions, "$field $oper ".$args{dbh}->quote($value);
       }
     }
   }
 
   $select .= join ' AND ', @conditions;
-  return $select;
-}
-
-# returns true iff we should be printing verbose diagnostic messages
-sub _verbose
-{
-  my %args = @_;
-  return $args{verbose}
-         || $Test::DatabaseRow::verbose
-	 || $ENV{TEST_DBROW_VERBOSE};
-}
-
-# prints out handy diagnostic text if we're printing out verbose text
-sub _sql_diag
-{
-  my %args = @_;
-  return unless _verbose(%args);
-
-  # print out the SQL
-  Test::Builder::DatabaseRow->diag("The SQL executed was:");
-  Test::Builder::DatabaseRow->diag(map { "  $_\n" } split /\n/x, $args{sqls});
-
-  # print out the bound parameters
-  if (@{ $args{sqlb} })
-  {
-    Test::Builder::DatabaseRow->diag("The bound parameters were:");
-    foreach my $bind (@{ $args{sqlb} })
-    {
-      if (defined($bind))
-       { Test::Builder::DatabaseRow->diag("  '$bind'") }
-      else
-       { Test::Builder::DatabaseRow->diag("  undef") }
-    }
-  }
-
-  # print out the database
-  return Test::Builder::DatabaseRow->diag("on database '$args{dbh}{Name}'");
+  return ($select);
 }
 
 =head2 not_row_ok
@@ -779,6 +704,9 @@ correct that.  Also, no matter what version of Perl you're running,
 currently no way provided by this module to force the utf8 flag to be
 turned on for some fields and not on for others.
 
+The inbuilt SQL builder always assumes you mean C<IS NULL> not 
+C<= NULL> when you pass in C<undef> in a C<=> section
+
 =head1 AUTHOR
 
 Written by Mark Fowler B<mark@twoshortplanks.com>
@@ -802,76 +730,100 @@ L<Test::More>, L<DBI>
 
 =cut
 
-1;
-
-package Test::Builder::DatabaseRow;
-
-use strict;
-use vars qw($Test);
+########################################################################
+# testing functions
+########################################################################
 
 # get the test builder singleton
-use Test::Builder;
-$Test = Test::Builder->new();
+my $tester = Test::Builder->new();
 
-# replicate the testing functions we use
-
-sub ok
-{
+sub _pass {
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  shift;
-  return $Test->ok(@_);
+  return $tester->ok(1, shift);
 }
 
-sub diag
-{
+sub _fail {
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  shift;
-  return $Test->diag(@_);
+  $tester->ok(0, shift);
+  $tester->diag($_) foreach @_;
+  return 0;
 }
 
-# cmp_diag and is_diag were originally private functions in
+ # prints out handy diagnostic text if we're printing out verbose text
+sub _sql_diag {
+  my ($dbh_name, $sql, @bind) = @_;
+
+  # print out the SQL
+  $tester->diag("The SQL executed was:");
+  $tester->diag(map { "  $_\n" } split /\n/x, $sql);
+
+  # print out the bound parameters
+  if (@bind) {
+    $tester->diag("The bound parameters were:");
+    foreach my $bind (@bind) {
+      if (defined($bind))
+       { $tester->diag("  '$bind'") }
+      else
+       { $tester->diag("  undef") }
+    }
+  }
+
+  # print out the database
+  return $tester->diag("on database '$dbh_name'");
+}
+
+# returns true iff we should be printing verbose diagnostic messages
+sub _verbose {
+  my %args = @_;
+  return $args{verbose}
+    || $Test::DatabaseRow::verbose
+    || $ENV{TEST_DBROW_VERBOSE};
+}
+
+# _cmp_diag and is__diag were originally private functions in
 # Test::Builder (and were written by Schwern).  In theory we could
 # call them directly there and it should make no difference but since
 # they are private functions they could change at any time (or even
 # vanish) as new versions of Test::Builder are released.  To protect
 # us from that happening we've defined them here.
 
-sub cmp_diag {
-    my($self, $got, $type, $expect) = @_;
+sub _cmp_diag {
+  my($got, $type, $expect) = @_;
 
-    $got    = defined $got    ? "'$got'"    : 'undef';
-    $expect = defined $expect ? "'$expect'" : 'undef';
+  $got    = defined $got    ? "'$got'"    : 'undef';
+  $expect = defined $expect ? "'$expect'" : 'undef';
 
-    return $Test->diag(sprintf <<"DIAGNOSTIC", $got, $type, $expect);
+  return $tester->diag(sprintf <<"DIAGNOSTIC", $got, $type, $expect);
     %s
         %s
     %s
 DIAGNOSTIC
 }
 
-sub is_diag {
-    my($self, $got, $type, $expect) = @_;
+sub _is_diag {
+  my($got, $type, $expect) = @_;
 
-    foreach my $val (\$got, \$expect) {
-        if( defined ${$val} ) {
-            if( $type eq 'eq' ) {
-                # quote and force string context
-                ${$val} = "'${$val}'"
-            }
-            else {
-                # force numeric context
-                ${$val} = ${$val}+0;
-            }
-        }
-        else {
-            ${$val} = 'NULL';
-        }
-    }
+  foreach my $val (\$got, \$expect) {
+      if( defined ${$val} ) {
+          if( $type eq 'eq' ) {
+              # quote and force string context
+              ${$val} = "'${$val}'"
+          }
+          else {
+              # force numeric context
+              ${$val} = ${$val}+0;
+          }
+      }
+      else {
+          ${$val} = 'NULL';
+      }
+  }
 
-    return $Test->diag(sprintf <<"DIAGNOSTIC", $got, $expect);
+  return $tester->diag(sprintf <<"DIAGNOSTIC", $got, $expect);
          got: %s
     expected: %s
 DIAGNOSTIC
-
 }
+
 1;
+

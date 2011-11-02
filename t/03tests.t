@@ -251,12 +251,12 @@ sub fetchrow_hashref
 
   # return undef after the first call)
   if ($this->{called})
-    { return undef }
+    { return }
   else
     { $this->{called} = 1 }
 
   return
     ($parent->nomatch)
-     ?  undef
+     ?  ()
      : { fooid => 123, name => "fred" }
 }

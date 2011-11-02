@@ -111,8 +111,8 @@ sub fetchrow_hashref
 
   $this->{returned}++;
 
-  return undef if $parent->nomatch;
-  return undef if $this->{returned} > $parent->results;
+  return if $parent->nomatch;
+  return if $this->{returned} > $parent->results;
 
   if ($this->{returned} == 1)
     { return { fooid => 123, name => "fred" } }
@@ -124,5 +124,5 @@ sub fetchrow_hashref
     { return { fooid => 125, name => "ernie" } }
 
   # oops, someone wanted more results than we prepared
-  return undef;
+  return;
 }

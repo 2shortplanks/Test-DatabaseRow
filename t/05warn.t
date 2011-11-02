@@ -57,7 +57,7 @@ sub fetchrow_hashref
 
   # return undef after the first call)
   if ($this->{called})
-    { return undef }
+    { return }
   else
     { $this->{called} = 1 }
 

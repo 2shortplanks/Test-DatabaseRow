@@ -1,19 +1,37 @@
-1.05  fix for 5.13.6+ new regualar expression stringification
-      breaking our own test suite
+1.05  fix for 5.13.6+ new regualar expression stringification breaking our own
+      test suite
 
-      move to Module::Install
+      Moved to Module::Install instead of Module::Build.
 
-      Add standard Kwalitee tests and make them pass
+      Add standard Kwalitee tests and make them pass.
 
-1.04  added utf8 hack to allow data from the database to be
-      marked as utf8 before it's compared to anything
+      Fixed the eval statements to cope with resetting of $@ in a DESTROY
+      block (an issue in Perl 5.12 and below)
 
-1.03  added the ability to get at the results after you've run
-      row_ok
+      Addressed a bug that could leave fatal errors enabled on on the passed
+      database handle after an exception had been raised
+
+      Addresses a bug where the arrayref passed as the "sql" argument
+      would be altered
+
+      Improved the documentation
+
+      Refactored a lot of code;  Switch bracing convention.  Removed the
+      sub package.
+
+      Disabled "use warnings" making this compatible with 5.004
+
+1.04  added utf8 hack to allow data from the database to be marked as utf8
+      before it's compared to anything
+
+1.03  added the ability to get at the results after you've run row_ok
 
 1.02  Added Build.PL to the MANIFEST (oops)
+
       Patches from Andy Lester to mean:
+
       Fixed docs on not_row_ok.
+
       results, max_results and min_results now show the actual
       incorrect values, instead of hardcoded leftovers.
 

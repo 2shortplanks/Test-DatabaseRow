@@ -72,8 +72,8 @@ sub fetchrow_hashref
 
   $this->{returned}++;
 
-  return undef if $parent->nomatch;
-  return undef if $this->{returned} > $parent->results;
+  return if $parent->nomatch;
+  return if $this->{returned} > $parent->results;
 
   # we're creating utf8 strings by directly writing in the
   # utf8 bytes.  This gives us utf8 strings we're testing
@@ -85,5 +85,5 @@ sub fetchrow_hashref
 	       beast => "m\x{c3}\x{b8}\x{c3}\x{b8}se" } }
 
   # oops, someone wanted more results than we prepared
-  return undef;
+  return;
 }

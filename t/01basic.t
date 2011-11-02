@@ -19,92 +19,125 @@ BEGIN { use_ok "Test::DatabaseRow" }
 # have been really quoted if it was a real dbh connection
 my $dbh = FakeDBI->new();
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-	      			      sql   => 
-q{SELECT * FROM foo WHERE fooid = 123}))[0],
-q{SELECT * FROM foo WHERE fooid = 123},
-"simple test");
+{
+  my @select = Test::DatabaseRow::_build_select(
+    dbh => $dbh,
+    sql => q{SELECT * FROM foo WHERE fooid = 123},
+  );
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-	      			      sql   => 
-[q{SELECT * FROM foo WHERE fooid = ?}, 123]))[0],
-q{SELECT * FROM foo WHERE fooid = ?},
-"simple test sql arrayref");
+  is($select[0],
+     q{SELECT * FROM foo WHERE fooid = 123},
+     "simple test"
+  );
+}
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-	      			      sql   => 
-[q{SELECT * FROM foo WHERE fooid = ?}, 123]))[1]->[0],
-123,
-"simple test sql arrayref");
+########################################################################
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => { '=' => { fooid => 123 }}))[0],
-q{SELECT * FROM foo WHERE fooid = qtd<123>},
-"simple test");
+{
+  my @select = Test::DatabaseRow::_build_select(
+    dbh => $dbh,
+    sql => [ q{SELECT * FROM foo WHERE fooid = 123} ],
+  );
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-	 			      table => "foo",
-				      where => [ fooid => 123 ]))[0],
-q{SELECT * FROM foo WHERE fooid = qtd<123>},
-"short format test");
+  is_deeply(\@select,
+    [ q{SELECT * FROM foo WHERE fooid = 123} ],
+    "simple test sql arrayref no bind"
+  );
+}
 
-###
-# multiple items
-###
+########################################################################
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => { '=' => { fred   => "wilma" ,
-						 	  barney => "betty" ,
-						        }
-					   }))[0],
-q{SELECT * FROM foo WHERE barney = qtd<betty> AND fred = qtd<wilma>},
-"simple test");
+{
+  my $array = [ q{SELECT * FROM foo WHERE fooid = ? AND bar = ?}, 123, 456 ];
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => [ fred => "wilma",
-						 barney => "betty",]))[0],
-q{SELECT * FROM foo WHERE barney = qtd<betty> AND fred = qtd<wilma>},
-"short format test");
+  my @select = Test::DatabaseRow::_build_select(
+    dbh => $dbh,
+    sql => $array,
+  );
 
-###
-# multiple multiple items
-###
+  is_deeply(
+    $array,
+    [ q{SELECT * FROM foo WHERE fooid = ? AND bar = ?}, 123, 456 ],
+    "array passed in unaltered",
+  );
 
-is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => { '=' =>    { fred   => "wilma" ,
-							     barney => "betty" ,
-							   },
-						 'LIKE' => { pet => "dino%" },
-					       }))[0],
-q{SELECT * FROM foo WHERE barney = qtd<betty> AND fred = qtd<wilma> AND pet LIKE qtd<dino%>},
-"multiple");
+  is_deeply(\@select,
+    [ q{SELECT * FROM foo WHERE fooid = ? AND bar = ?}, 123, 456 ],
+    "simple test sql arrayref with bind"
+  );
+}
+
+########################################################################
+
+{
+  my $where = { '=' => { fooid => 123, bar => "abc" } };
+
+  my @select = Test::DatabaseRow::_build_select(
+    dbh   => $dbh,
+    table => "foo",
+    where => $where
+  );
+
+  is_deeply(
+    $where,
+    { '=' => { fooid => 123, bar => "abc" } },
+    "where datastructure unaltered"
+  );
+
+  is_deeply( \@select,
+    [ q{SELECT * FROM foo WHERE bar = qtd<abc> AND fooid = qtd<123>} ],
+    "simple equals test"
+  );
+}
+
+########################################################################
+
+{
+  my $where = [ fooid => 123, bar => "abc" ];
+
+  my @select = Test::DatabaseRow::_build_select(
+    dbh   => $dbh,
+    table => "foo",
+    where => $where
+  );
+
+  is_deeply(
+    $where,
+    [ fooid => 123, bar => "abc" ],
+    "where datastructure unaltered"
+  );
+
+  is_deeply( \@select,
+    [ q{SELECT * FROM foo WHERE bar = qtd<abc> AND fooid = qtd<123>} ],
+    "simple equals test with shortcut"
+  );
+}
+
+########################################################################
 
 ###
 # nulls
 ###
 
 is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => [ fooid => undef ]))[0],
+                      table => "foo",
+                      where => [ fooid => undef ]))[0],
 q{SELECT * FROM foo WHERE fooid IS NULL},
 "auto null test");
 
 is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => { "=" => { fooid => undef } }))[0],
+                      table => "foo",
+                      where => { "=" => { fooid => undef } }))[0],
 q{SELECT * FROM foo WHERE fooid IS NULL},
 "auto null test2");
 
 is((Test::DatabaseRow::_build_select( dbh   => $dbh,
-				      table => "foo",
-				      where => { "IS NOT" => { fooid => undef } }))[0],
+                      table => "foo",
+                      where => { "IS NOT" => { fooid => undef } }))[0],
 q{SELECT * FROM foo WHERE fooid IS NOT NULL},
 "auto null test3");
 
+########################################################################
 
 ###
 # munge array
@@ -118,6 +151,8 @@ is($hashref->{'=~'}{regex},   qr/foo/, "regex rearanged");
 is($hashref->{'=='}{numbers}, 123,     "number rearagned");
 is($hashref->{'eq'}{string},  "foo",   "string rearagned");
 
+
+########################################################################
 
 # fake database package
 package FakeDBI;
