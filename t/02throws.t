@@ -13,25 +13,25 @@ BEGIN
   }
 }
 
-use Test::More tests => 10;
+use Test::More tests => 16;
 use Test::Exception;
 
 use Test::DatabaseRow;
 
 # check we get the correct error message
 throws_ok { row_ok }
-  qr/No dbh passed and no default dbh set/, "no dbh";
+  qr/Needed fetch results but no 'dbh' defined/, "no dbh";
 
 # define a new default database
 $Test::DatabaseRow::dbh = FakeDBI->new;
 
 # no table test
 throws_ok { row_ok }
-  qr/No 'table' or 'sql' passed as an argument/, "no table";
+  qr/Needed to build SQL but no 'table' defined/, "no table";
 
 # no where test
 throws_ok { row_ok( table => "foo" ) }
-  qr/'table' passed as an argument, but no 'where' argument/, "no where";
+  qr/Needed to build SQL but no 'where' defined/, "no where";
 
 # bad where tests
 throws_ok { row_ok( table => "foo",
@@ -75,7 +75,44 @@ dies_ok { row_ok( dbh    => FakeDBI->new(fallover => 1, "hello" => "there"),
          	  sql    => "any old gumph",
 	          tests  => [ fooid => 1 ]) } "handles problems with sql";
 
+########################################################################
+# bad SQL
 
+throws_ok { row_ok( sql => \[] ) }
+  qr/Can't understand the sql/;
+
+
+########################################################################
+# bad storage
+
+throws_ok { row_ok( sql => "some sql", store_rows => {}) }
+  qr/Must pass an arrayref in 'store_rows'/, "no col from sql";
+
+throws_ok { row_ok( sql => "some sql", store_row => \"foo") }
+  qr/Invalid argument passed in 'store_row'/, "no col from sql";
+
+########################################################################
+# Test::DatabaseRow::Object
+
+{
+  my $tdr = Test::DatabaseRow::Object->new(where => [ foo => "bar" ], table => "buzz" );
+  throws_ok { $tdr->sql_and_bind }
+    qr/Needed to quote SQL during SQL building but no 'dbh' defined/, "quote but no dbh"
+}
+
+{
+  throws_ok {
+    my $tdr = Test::DatabaseRow::Object->new( tests => [qw( a b c)] );
+  }  qr/Can't understand the passed test arguments/, "odd tests"
+}
+
+########################################################################
+# Test::DatabaseRow::Result
+
+throws_ok { Test::DatabaseRow::Result->new( diag => {} ) }
+  qr/Invalid argument to diag/, "diag invalid";
+
+########################################################################
 
 # fake database package
 package FakeDBI;

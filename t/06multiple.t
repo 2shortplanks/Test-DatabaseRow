@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 8;
+use Test::More tests => 13;
 
 use Test::DatabaseRow;
 use Test::Builder::Tester;
@@ -80,9 +80,67 @@ not_row_ok(table   => "dummy",
            label   => "matches");
 test_test("not_row");
 
+$Test::DatabaseRow::dbh = FakeDBI->new(results => 3);
+
+test_out("ok 1 - matches");
+all_row_ok(table   => "dummy",
+           where   => [ dummy => "dummy" ],
+           tests   => [ name => qr/e/ ],
+           label   => "matches");
+test_test("all_row_ok pass");
+
+test_out("not ok 1 - matches");
+test_fail(+4);           
+test_diag("While checking column 'name' on 2nd row");
+test_diag("         got: 'bert'");
+test_diag("    expected: 'fred'");
+all_row_ok(table   => "dummy",
+           where   => [ dummy => "dummy" ],
+           tests   => [ name => "fred" ],
+           label   => "matches");
+test_test("all_row_ok fail");
+
+test_out("not ok 1 - matches");
+test_fail(+2);           
+test_diag("No 4th row");
+Test::DatabaseRow::Object->new(
+  dbh          => FakeDBI->new(results => 2),
+  sql_and_bind => "dummy",
+)->row_at_index_ok(3)->pass_to_test_builder("matches");
+test_test("missing row");
+
+test_out("ok 1 - matches");
+Test::DatabaseRow::Object->new(
+  dbh          => FakeDBI->new(results => 2),
+  sql_and_bind => "dummy",
+)->row_at_index_ok(1)->pass_to_test_builder("matches");
+test_test("row_at_index_ok with no tests");
+
+$Test::DatabaseRow::dbh = FakeDBI->new(results => 4);
+
+# note the following test also checks undef <-> NULL handing
+test_out("not ok 1 - matches");
+test_fail(+10);           
+test_diag("While checking column 'gender' on 4th row");
+test_diag("         got: NULL");
+test_diag("    expected: 'm'");
+test_diag("The SQL executed was:");
+test_diag("  dummy sql");
+test_diag("The bound parameters were:");
+test_diag("  '7'");
+test_diag("  undef");
+test_diag("on database 'fakename'");
+all_row_ok(
+  sql     => ["dummy sql",7,undef],
+  tests   => [ gender => "m" ],
+  label   => "matches",
+  verbose => 1,
+);
+test_test("verbose");
+
 # fake database package
 package FakeDBI;
-sub new { my $class = shift; return bless { @_ }, $class };
+sub new { my $class = shift; return bless { @_, Name => "fakename" }, $class };
 sub quote { return "qtd<$_[1]>" };
 
 sub prepare
@@ -115,13 +173,16 @@ sub fetchrow_hashref
   return if $this->{returned} > $parent->results;
 
   if ($this->{returned} == 1)
-    { return { fooid => 123, name => "fred" } }
+    { return { fooid => 123, name => "fred", gender => 'm'} }
 
   if ($this->{returned} == 2)
-    { return { fooid => 124, name => "bert" } }
+    { return { fooid => 124, name => "bert", gender => 'm'} }
 
   if ($this->{returned} == 3)
-    { return { fooid => 125, name => "ernie" } }
+    { return { fooid => 125, name => "ernie", gender => 'm'} }
+
+  if ($this->{returned} == 4)
+    { return { fooid => 125, name => undef, gender => undef } }
 
   # oops, someone wanted more results than we prepared
   return;

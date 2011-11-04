@@ -47,7 +47,7 @@ test_test("default test name");
 
 test_out("not ok 1 - matches");
 test_fail(+4);
-test_diag("While checking column 'fooid'");
+test_diag("While checking column 'fooid' on 1st row");
 test_diag("         got: 123");
 test_diag("    expected: 124");
 row_ok(table => "dummy",
@@ -60,7 +60,7 @@ test_test("failing ==");
 
 test_out("not ok 1 - matches");
 test_fail(+7);
-test_diag("While checking column 'fooid'");
+test_diag("While checking column 'fooid' on 1st row");
 test_diag("         got: 123");
 test_diag("    expected: 124");
 test_diag("The SQL executed was:");
@@ -77,7 +77,7 @@ test_test("failing == verbose");
 
 test_out("not ok 1 - matches");
 test_fail(+9);
-test_diag("While checking column 'fooid'");
+test_diag("While checking column 'fooid' on 1st row");
 test_diag("         got: 123");
 test_diag("    expected: 124");
 test_diag("The SQL executed was:");
@@ -95,7 +95,7 @@ test_test("failing == verbose bind");
 
 test_out("not ok 1 - matches");
 test_fail(+4);
-test_diag("While checking column 'name'");
+test_diag("While checking column 'name' on 1st row");
 test_diag(qq{         got: 'fred'});
 test_diag(qq{    expected: 'frea'});
 row_ok(table => "dummy",
@@ -108,7 +108,7 @@ test_test("failing eq");
 
 test_out("not ok 1 - matches");
 test_fail(+7);
-test_diag("While checking column 'name'");
+test_diag("While checking column 'name' on 1st row");
 test_diag(qq{         got: 'fred'});
 test_diag(qq{    expected: 'frea'});
 test_diag("The SQL executed was:");
@@ -125,7 +125,7 @@ test_test("failing eq verbose");
 
 test_out("not ok 1 - matches");
 test_fail(+5);
-test_diag("While checking column 'name'");
+test_diag("While checking column 'name' on 1st row");
 test_diag(qq{    'fred'});
 test_diag(qq{        =~});
 test_diag(qq{    '(?$DEFAULT:rd)'});
@@ -139,7 +139,7 @@ test_test("failing =~");
 
 test_out("not ok 1 - matches");
 test_fail(+8);
-test_diag("While checking column 'name'");
+test_diag("While checking column 'name' on 1st row");
 test_diag(qq{    'fred'});
 test_diag(qq{        =~});
 test_diag(qq{    '(?$DEFAULT:rd)'});
@@ -157,7 +157,7 @@ test_test("failing =~ verbose");
 
 test_out("not ok 1 - matches");
 test_fail(+5);
-test_diag("While checking column 'fooid'");
+test_diag("While checking column 'fooid' on 1st row");
 test_diag(qq{    '123'});
 test_diag(qq{        <});
 test_diag(qq{    '12'});
@@ -169,7 +169,7 @@ test_test("failing <");
 
 test_out("not ok 1 - matches");
 test_fail(+5+3);
-test_diag("While checking column 'fooid'");
+test_diag("While checking column 'fooid' on 1st row");
 test_diag(qq{    '123'});
 test_diag(qq{        <});
 test_diag(qq{    '12'});

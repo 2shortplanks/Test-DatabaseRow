@@ -547,6 +547,11 @@ severity=5
 # YES! I like my code readable
 severity=5
 
+[Subroutines::ProhibitUnusedPrivateSubroutines]
+# NO, since I'm emulating moose I need to create private
+# method calls that are called dynamically
+severity=1
+
 ###################################################################################
 # PERL::CRITIC::MORE RULES
 

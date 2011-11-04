@@ -1,3 +1,12 @@
+2.00  Added Test::DatabaseRow::Object and Test::DatabaseRow::Result.
+      
+      Rewrote Test::DatabaseRow to use these classes to do everything
+
+      Added "all_rows_ok" function and ability to check all database rows
+      returned
+
+      improved test coverage.
+
 1.05  fix for 5.13.6+ new regualar expression stringification breaking our own
       test suite
 
@@ -20,6 +29,8 @@
       sub package.
 
       Disabled "use warnings" making this compatible with 5.004
+
+      (this release never made it to the CPAN)
 
 1.04  added utf8 hack to allow data from the database to be marked as utf8
       before it's compared to anything

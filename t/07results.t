@@ -1,8 +1,14 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+
+########################################################################
+# this tesst checks that store_XXX in Test::DatabaseRow's row_ok
+# functions works
+########################################################################
 
 use strict;
+use warnings;
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 use Test::DatabaseRow;
 use Test::Builder::Tester;
@@ -10,6 +16,8 @@ use Test::Builder::Tester;
 use Data::Dumper;
 
 $Test::DatabaseRow::dbh = FakeDBI->new(results => 2);
+
+########################################################################
 
 my @rows;
 test_out("ok 1 - matches");
@@ -24,6 +32,8 @@ is_deeply(\@rows, [
   { fooid => 123, name => "fred"  },
   { fooid => 124, name => "bert"  },
 ]);
+
+########################################################################
 
 my $row;
 test_out("ok 1 - matches");
@@ -41,7 +51,7 @@ row_ok(table   => "dummy",
        results => 2,
        label   => "matches",
        store_row => \$row);
-test_test("ref");
+test_test("scalar");
 is_deeply($row, { fooid => 123, name => "fred"  });
 
 my %row;
@@ -54,7 +64,19 @@ row_ok(table   => "dummy",
 test_test("hash");
 is_deeply(\%row, { fooid => 123, name => "fred"  });
 
+$row = {};
+test_out("ok 1 - matches");
+row_ok(table   => "dummy",
+       where   => [ dummy => "dummy" ],
+       results => 2,
+       label   => "matches",
+       store_row => \$row);
+test_test("ref");
+is_deeply($row, { fooid => 123, name => "fred"  });
+
+########################################################################
 # fake database package
+
 package FakeDBI;
 sub new { my $class = shift; return bless { @_ }, $class };
 sub quote { return "qtd<$_[1]>" };
