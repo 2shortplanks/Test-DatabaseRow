@@ -21,6 +21,7 @@ no_index:
     - xt
 requires:
   DBI: 0
+  Scalar::Util: 1.21
   perl: 5.6.0
 resources:
   homepage: http://github.com/2shortplanks/Test-DatabaseRow/tree
