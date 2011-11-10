@@ -1,3 +1,8 @@
+2.01  Add tests that use DBD::SQLite to test a real database
+
+      Fix the bugs with the DBI interface (thanks to ilmari for pointing
+      these out)
+
 2.00  Added Test::DatabaseRow::Object and Test::DatabaseRow::Result.
       
       Rewrote Test::DatabaseRow to use these classes to do everything

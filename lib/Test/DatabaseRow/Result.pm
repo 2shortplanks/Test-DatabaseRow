@@ -3,7 +3,7 @@ package Test::DatabaseRow::Result;
 use strict;
 use warnings;
 
-our $VERSION = "2.00";
+our $VERSION = "2.01";
 
 use Carp qw(croak);
 
