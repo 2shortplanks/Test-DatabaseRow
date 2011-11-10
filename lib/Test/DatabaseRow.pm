@@ -533,11 +533,6 @@ test script) that omitting both of these is treated as an error.  If
 you I<really> need to not pass a C<sql> or C<where> argument, do C<< where
 => [ 1 => 1 ] >>.
 
-We currently only test the first line returned from the database.
-This probably could do with rewriting so we test all of them.  The
-testing of this data is the easy bit; Printing out useful diagnostic
-infomation is hard.  Patches welcome.
-
 Passing shared variables (variables shared between multiple threads
 with B<threads::shared>) in with C<store_row> and C<store_rows> and
 then changing them while C<row_ok> is still executing is just asking

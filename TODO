@@ -1,3 +1,0 @@
-Testing the number of rows that the SQL returns is silly if we're only
-going to apply the test criteria to the first one, though XP says I
-should release now and worry about that extra functionality later.
