@@ -36,7 +36,7 @@ unless (eval { require Regexp::Common; Regexp::Common->import; 1 }) {
 # constructor and accessors
 #
 # note that this is all written in the Moose style, even though we
-# don't actualy use Moose (because it's too big a dependancy
+# don't actually use Moose (because it's too big a dependency
 # for this widely used Test module.)  Hopefully if you use Moose
 # a lot (and you should) then the conventions used in this code will
 # be understandable.
@@ -52,7 +52,7 @@ unless (eval { require Regexp::Common; Regexp::Common->import; 1 }) {
 # Some of this code could have been made shorter via meta programing
 # e.g. programming to dynamically create methods, making the has_XXX
 # attributes automatic.  I've deliberately not done that since that
-# would drastically reduce the readablilty of this code.  I'm not against
+# would drastically reduce the readability of this code.  I'm not against
 # that kind of thing, but it should be packaged up in it's own module,
 # and that would end up re-inventing Moose...
 #
@@ -551,8 +551,8 @@ C<has_> to determine if it has been set or not.
 
 An arrayref of hashrefs, each representing a row returned from
 the database.  Each key in the hashref should be the column name
-and the value the corrisponding field's value.  This
-databastructure is idential to that.
+and the value the corresponding field's value.  This
+datastructure is identical to that.
 
 If this accessor is not passed then it will be populated on
 first use by executing the contents of C<sql_and_bind> against the
@@ -564,7 +564,7 @@ The SQL and bind variables to execute if no results were passed
 into the db_results hash.  This should be an arrayref containing
 the SQL as the first element and the bind values as further values.
 
-This accessor will auotmatically coerce a simple scalar passed
+This accessor will automatically coerce a simple scalar passed
 in into a single 
 
 If this accessor is not passed then it will be populated on
@@ -572,7 +572,7 @@ first use by building SQL from the C<where> and C<table> accessors.
 
 =item dbh
 
-The databse handle used to execute the SQL statement in
+The database handle used to execute the SQL statement in
 C<sql_and_bind> if no C<db_results> were passed.
 
 =item table
@@ -598,7 +598,7 @@ to match against. For example:
 Values of C<undef> will automatically converted into checks
 for NULLs.
 
-This accessor automatically coereces array refs that are
+This accessor automatically coerces array refs that are
 passed into a pure equals hashref.  For example:
 
   [ foo => "bar", bazz => "buzz" ]
@@ -640,7 +640,7 @@ test against. For example:
     '=~' => { address => "%Bedrock%" },
   }
 
-This accessor automatically coereces array refs that are
+This accessor automatically coerces array refs that are
 passed into a hashref structure, converting things that look
 like strings into C<eq> tests, things that look like numbers
 into C<==> tests and things that are references to regular
@@ -702,7 +702,7 @@ for the number of results.
 =item row_at_index_ok( $row_index )
 
 Returns a Test::DatabaseRow::Result that represents if the
-element corrisponding to the passed row index in C<db_results>
+element corresponding to the passed row index in C<db_results>
 match the tests defined in C<tests>.
 
 =item db_results_ok
@@ -721,11 +721,11 @@ elements in C<db_results> match the tests defined in C<tests>.
 
 =head1 BUGS
 
-Bugs (and requests for new features) can be reported to the open source
-development team at Profero though the CPAN RT system:
+Bugs (and requests for new features) can be reported though
+the CPAN RT system:
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-DatabaseRow>
 
-Alternativly, you can simply fork this project on github and
+Alternatively, you can simply fork this project on github and
 send me pull requests.  Please see <http://github.com/2shortplanks/Test-DataabseRow>
 
 =head1 AUTHOR
@@ -736,7 +736,7 @@ Copyright Profero 2003, 2004.  Copyright Mark Fowler 2011.
 
 Some code taken from B<Test::Builder>, written by Michael Schwern.
 Some code taken from B<Regexp::Common>, written by Damian Conway.  Neither
-objected to it's inclusion in this module.
+objected to its inclusion in this module.
 
 Some code taken from B<Lingua::EN::Numbers::Ordinate>, written by Sean M. Burke.
 

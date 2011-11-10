@@ -23,7 +23,7 @@ sub new {
   return $self;
 }
 
-## acessors ############################################################
+## accessors ############################################################
 
 # has is_error => ( is => "ro", isa => "Bool", default => 0,
 #                   predicate => 'has_error' )
@@ -135,7 +135,7 @@ the values of the accessors.
 
 =item add_diag( @diagnostics )
 
-Adds extra diagnositics to the C<diag> array.
+Adds extra diagnostics to the C<diag> array.
 
 =item pass_to_test_builder( $label )
 
@@ -149,11 +149,11 @@ Returns true if and only if C<is_error> is false.
 
 =head1 BUGS
 
-Bugs (and requests for new features) can be reported to the open source
-development team at Profero though the CPAN RT system:
+Bugs (and requests for new features) can be reported though the
+CPAN RT system:
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-DatabaseRow>
 
-Alternativly, you can simply fork this project on github and
+Alternatively, you can simply fork this project on github and
 send me pull requests.  Please see <http://github.com/2shortplanks/Test-DataabseRow>
 
 =head1 AUTHOR

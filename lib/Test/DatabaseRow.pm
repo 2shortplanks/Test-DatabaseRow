@@ -52,9 +52,9 @@ sub row_ok {
   my $tbr = $class->new(%args);
   my $tbr_result = $tbr->test_ok();
 
-  # store the results of the databae operation if needed
+  # store the results of the database operation if needed
   # this is another example of functionality that is difficult
-  # to add to a procedual interface and would have been easier
+  # to add to a procedural interface and would have been easier
   # if I'd used an OO interface.  That's the problem with
   # published APIs though, isn't it?  It's hard to change them
   if ($args{store_rows}) {
@@ -180,14 +180,14 @@ bind variables that will be used to fill in placeholders.
 
 =item table
 
-Build the SELECT statement programatically.  This parameter contains the name
+Build the SELECT statement programmatically.  This parameter contains the name
 of the table the  SELECT statement should be executed against.  You cannot
 pass both a C<table> parameter and a C<sql> parameter.  If you specify
 C<table> you B<must> pass a C<where> parameter also (see below.)
 
 =item where
 
-Build the SELECT statement programatically.  This parameter should contain
+Build the SELECT statement programmatically.  This parameter should contain
 options that will combine into a WHERE clause in order to select the row
 that you want to test.
 
@@ -218,7 +218,7 @@ associated operator SQL should search for.
 
 This syntax is quite flexible, but can be overkill for simple tests.
 In order to make this simpler, if you are only using '=' tests you
-may just pass an arrayref of the columnnames / values.  For example,
+may just pass an arrayref of the column names / values.  For example,
 just to test
 
   SELECT *
@@ -310,7 +310,7 @@ C<TEST_DBROW_VERBOSE> environmental variable to a true value.
 
 Sometimes, it's not enough to just use the simple tests that
 B<Test::DatabaseRow> offers you.  In this situation you can use the
-C<store_rows> function to get at the results that row_ok has extacted
+C<store_rows> function to get at the results that row_ok has extracted
 from the database.  You should pass a reference to an array for the
 results to be stored in;  After the call to C<row_ok> this array
 will be populated with one hashref per row returned from the database,
@@ -464,9 +464,9 @@ complex select statements that can easily be 'tied in' to C<row_ok>:
 
 Often, you may store data utf8 data in your database.  However, many
 modern databases still do not store the metadata to indicate the data
-stored in them is utf8 and thier DBD drivers may not set the utf8 flag
+stored in them is utf8 and their DBD drivers may not set the utf8 flag
 on values returned to Perl.  This means that data returned to Perl
-will be treated as if it is encoded in your normal charecter set
+will be treated as if it is encoded in your normal character set
 rather than being encoded in utf8 and when compared to a byte for
 byte an identical utf8 string may fail comparison.
 
@@ -494,13 +494,13 @@ Or set the global C<$Test::DatabaseRow::force_utf8> variable
           tests      => [ name => "Napol\x{e9}on" ]);
 
 Please note that in the above examples with C<use utf8> enabled I
-could have typed unicode eacutes into the string directly rather than
+could have typed Unicode eacutes into the string directly rather than
 using the C<\x{e9}> escape sequence, but alas the pod renderer you're
 using to view this documentation would have been unlikely to render
 those examples correctly, so I didn't.
 
 Please also note that if you want the debug information that this
-module creates to be redered to STDERR correctly for your utf8
+module creates to be rendered to STDERR correctly for your utf8
 terminal then you may need to stick
 
    binmode STDERR, ":utf8";
@@ -514,7 +514,7 @@ C<Test::DatabaseRow::Object> to do the actual work.  If you want
 to subclass that class (for example to use an alternative method
 of accessing the database) but continue to use this wrapper
 class you can do so by setting the C<$Test::DatabaseRow::object_class>
-varaible.
+variable.
 
 For example:
 
@@ -547,11 +547,11 @@ turned on for some fields and not on for others.
 The inbuilt SQL builder always assumes you mean C<IS NULL> not
 C<= NULL> when you pass in C<undef> in a C<=> section
 
-Bugs (and requests for new features) can be reported to the open source
-development team at Profero though the CPAN RT system:
+Bugs (and requests for new features) can be reported though the CPAN
+RT system:
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-DatabaseRow>
 
-Alternativly, you can simply fork this project on github and
+Alternatively, you can simply fork this project on github and
 send me pull requests.  Please see <http://github.com/2shortplanks/Test-DataabseRow>
 
 =head1 AUTHOR
@@ -559,10 +559,6 @@ send me pull requests.  Please see <http://github.com/2shortplanks/Test-Dataabse
 Written by Mark Fowler B<mark@twoshortplanks.com>
 
 Copyright Profero 2003, 2004.  Copyright Mark Fowler 2011.
-
-Some code taken from B<Test::Builder>, written by Michael Schwern.
-Some code taken from B<Regexp::Common>, written by Damian Conway.  Neither
-objected to it's inclusion in this module.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
