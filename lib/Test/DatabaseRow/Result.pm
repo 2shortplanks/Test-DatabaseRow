@@ -59,12 +59,12 @@ sub add_diag {
 
 sub pass_to_test_builder {
 	my $self = shift;
-	my $label = shift;
+	my $description = shift;
 
   # get the test builder singleton
   my $tester = Test::Builder->new();
 
- 	my $result = $tester->ok($self->is_success, $label);
+ 	my $result = $tester->ok($self->is_success, $description);
  	$tester->diag($_) foreach @{ $self->diag };
  	return $result;
 }
@@ -137,7 +137,7 @@ the values of the accessors.
 
 Adds extra diagnostics to the C<diag> array.
 
-=item pass_to_test_builder( $label )
+=item pass_to_test_builder( $description )
 
 Causes this test to render itself out using C<Test::Builder>
 

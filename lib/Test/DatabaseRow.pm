@@ -44,9 +44,11 @@ sub row_ok {
   $args{sql_and_bind} = $args{sql}
     if exists $args{sql} && !exists $args{sql_and_bind};
 
-  # remove label
-  my $label = delete $args{label};
-  $label = "simple db test" unless defined $label;
+  # remove description
+  my $label       = delete $args{label};
+  my $description = delete $args{description};
+  $description = $label unless defined $description;
+  $description = "simple db test" unless defined $description;
 
   # do the test
   my $tbr = $class->new(%args);
@@ -76,7 +78,7 @@ sub row_ok {
 
   # render the result with Test::Builder
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  return $tbr_result->pass_to_test_builder( $label );
+  return $tbr_result->pass_to_test_builder( $description );
 }
 push @EXPORT, qw(row_ok);
 
@@ -114,7 +116,7 @@ Test::DatabaseRow - simple database tests
   all_row_ok(
     sql   => "SELECT * FROM contacts WHERE cid = '123'",
     tests => [ name => "trelane" ],
-    label => "contact 123's name is trelane"
+    description => "contact 123's name is trelane"
   );
 
   # test with shortcuts
@@ -122,7 +124,7 @@ Test::DatabaseRow - simple database tests
     table => "contacts",
     where => [ cid => 123 ],
     tests => [ name => "trelane" ],
-    label => "contact 123's name is trelane"
+    description => "contact 123's name is trelane"
   );
 
   # complex test
@@ -134,7 +136,7 @@ Test::DatabaseRow - simple database tests
                            num    => 134                  },
                'eq'   => { person => "Mark Fowler"        },
                '=~'   => { road   => qr/Liverpool R.?.?d/ },},
-    label => "trelane entered into contacts okay" );
+    description => "trelane entered into contacts okay" );
   );
 
 =head1 DESCRIPTION
@@ -340,6 +342,24 @@ hashref...
 
   ok(Email::Valid->address($row->{'email'}));
 
+=item description
+
+The description that this test will use with C<Test::Builder>,
+i.e the thing that will be printed out after ok/not ok.
+For example:
+
+  row_ok(
+    sql => "SELECT * FROM queue",
+    description => "something in the queue"
+  );
+
+Hopefully produces something like:
+
+  ok 1 - something in the queue
+
+For historical reasons you may also pass C<label> for this
+parameter.
+
 =back
 
 =head2 Checking the number of results
@@ -458,7 +478,7 @@ complex select statements that can easily be 'tied in' to C<row_ok>:
                                    road => { 'like' => "Liverpool%" },
                                  })],
          tests => [ email => 'mark@twoshortplanks.com' ],
-         label => "check mark's email address");
+         description => "check mark's email address");
 
 =head2 utf8 hacks
 

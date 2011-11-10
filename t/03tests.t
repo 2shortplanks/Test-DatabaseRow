@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 
 use Test::DatabaseRow;
 use Test::Builder::Tester;
@@ -25,7 +25,7 @@ row_ok(table => "dummy",
        tests => [ fooid => 123,
                   name  => "fred",
                   name  => qr/re/  ],
-       label => "matches");
+       description => "matches");
 test_test("matching with shortcut");
 
 test_out("ok 1 - matches");
@@ -221,6 +221,13 @@ row_ok(dbh   => FakeDBI->new(nomatch => 1),
        label => "matches",
        verbose => 1);
 test_test("no returned data verbose 2");
+
+test_out("ok 1 - right");
+row_ok(table => "dummy",
+       where => [ dummy => "dummy" ],
+       label => "wrong",
+       description => "right");
+test_test("description trumps label");
 
 # fake database package
 package FakeDBI;
