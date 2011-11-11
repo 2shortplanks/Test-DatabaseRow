@@ -26,7 +26,6 @@ t/08utf8.t
 t/09has.t
 t/10result.t
 t/11th.t
-TODO
 xt/001pod.t
 xt/002podcoverage.t
 xt/003perlcritic.t
