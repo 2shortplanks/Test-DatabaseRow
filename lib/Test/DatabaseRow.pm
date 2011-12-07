@@ -44,7 +44,7 @@ sub row_ok {
   $args{sql_and_bind} = $args{sql}
     if exists $args{sql} && !exists $args{sql_and_bind};
 
-  # remove description
+  # remove description, provide default fallback from label
   my $label       = delete $args{label};
   my $description = delete $args{description};
   $description = $label unless defined $description;
@@ -54,8 +54,10 @@ sub row_ok {
   my $tbr = $object_class->new(%args);
   my $tbr_result = $tbr->test_ok();
 
-  # store the results of the database operation if needed
-  # this is another example of functionality that is difficult
+  # store the results of the database operation in a var passed
+  # into this function.
+  # 
+  # This is another example of functionality that is difficult
   # to add to a procedural interface and would have been easier
   # if I'd used an OO interface.  That's the problem with
   # published APIs though, isn't it?  It's hard to change them
