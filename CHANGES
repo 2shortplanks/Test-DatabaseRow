@@ -1,5 +1,13 @@
 2.02  Changed "label" to "diagnostic" (but kept backwards compatible
-      accepting of old object.
+      accepting of old object.)
+
+      Fix bug where an invalid comparison operator would cause test
+      failure rather than throwing an exception (bad input should
+      create exceptions, not fail tests)
+
+      Added better error messages when passing invalid tests in.
+
+      Improved commenting and flow control for better maintainability.
 
 2.01  Add tests that use DBD::SQLite to test a real database
 
