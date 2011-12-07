@@ -263,10 +263,10 @@ sub _coerce_and_verify_tests {
 
   # check we've got a hash of hashes
   unless (ref($tests) eq "HASH")
-    { croak "Can't understand the argument passed in 'tests'" }
-  foreach my $valuehash (values %{ $tests }) {
-    unless (ref($valuehash) eq "HASH")
-      { croak "Can't understand the argument passed in 'tests'" }
+    { croak "Can't understand the argument passed in 'tests': not a hashref or arrayref" }
+  foreach my $valuekey (keys %{ $tests }) {
+    unless (ref($tests->{ $valuekey }) eq "HASH")
+      { croak "Can't understand the argument passed in 'tests': key '$valuekey' didn't contain a hashref" }
   }
 
   return $tests;

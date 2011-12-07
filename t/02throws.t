@@ -51,14 +51,14 @@ throws_ok { row_ok( table => "foo",
 throws_ok { row_ok( table => "foo",
                     where => [ fooid => 123 ] ,
                     tests => \"fish" ) }
-  qr/Can't understand the argument passed in 'tests'/, "bad tests";
+  qr/Can't understand the argument passed in 'tests': not a hashref or arrayref/, "bad tests";
 
 # odd tests
 throws_ok { row_ok( table => "foo",
                     where => [ fooid => 123 ] ,
                     tests => { foo => [ bar => "baz" ] } );
           }
-  qr/Can't understand the argument passed in 'tests'/, "bad tests 2";
+  qr/Can't understand the argument passed in 'tests': key 'foo' didn't contain a hashref/, "bad tests 2";
 
 throws_ok { row_ok( table => "foo",
 		    where => [ fooid => 123 ] ,
