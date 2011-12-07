@@ -184,7 +184,7 @@ sub _build_db_results {
 
   # load "Encode" if we need to do utf8 munging
   if ($self->force_utf8) {
-    eval "use Encode; 1"
+    require Encode
       or croak "Can't load Encode, but force_utf8 is enabled";
   }
 
