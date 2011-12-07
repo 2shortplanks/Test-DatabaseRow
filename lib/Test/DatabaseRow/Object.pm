@@ -139,20 +139,24 @@ sub _build_sql_and_bind {
       # get the value
       my $value = $valuehash->{ $field };
 
-      # should this be "IS NULL" rather than "= ''"
+      # should this be "IS NULL" rather than "= ''"?
       if ($oper eq "=" && !defined($value)) {
         push @conditions, "$field IS NULL";
-      } elsif (!defined($value)) {
-        # just an undef.  I hope $oper is "IS" or "IS NOT"
-        push @conditions, "$field $oper NULL";
-      } else {
-        # proper value, quote it properly
-        # we do this instead of adding to bind because it makes the
-        # error messages much more readable
-        unless ($self->has_dbh)
-          { croak "Needed to quote SQL during SQL building but no 'dbh' defined" }
-        push @conditions, "$field $oper ".$self->dbh->quote($value);
+        next;
       }
+
+      # just an undef?  I hope $oper is "IS" or "IS NOT"
+      if (!defined($value)) {
+        push @conditions, "$field $oper NULL";
+        next;
+      }
+
+      # proper value, quote it properly
+      # we do this instead of adding to bind because it makes the
+      # error messages much more readable
+      unless ($self->has_dbh)
+        { croak "Needed to quote SQL during SQL building but no 'dbh' defined" }
+      push @conditions, "$field $oper ".$self->dbh->quote($value);
     }
   }
 
@@ -239,14 +243,21 @@ sub _coerce_and_verify_tests {
 
       if (!defined($value)) {
         $tests->{'eq'}{ $key } = $value;
-      } elsif (ref($value) eq "Regexp") {
-        $tests->{'=~'}{ $key } = $value;
-      } elsif ($value =~ /\A $RE{num}{real} \z/x) {
-        $tests->{'=='}{ $key } = $value;
-      } else {
-        # default to string comparison
-        $tests->{'eq'}{ $key } = $value;
+        next;
       }
+
+      if (ref($value) eq "Regexp") {
+        $tests->{'=~'}{ $key } = $value;
+        next;
+      }
+
+      if ($value =~ /\A $RE{num}{real} \z/x) {
+        $tests->{'=='}{ $key } = $value;
+        next;
+      }
+
+      # default to string comparison
+      $tests->{'eq'}{ $key } = $value;
     }
   }
 
@@ -464,19 +475,19 @@ sub _is_diag {
   my($self, $got, $type, $expect) = @_;
 
   foreach my $val (\$got, \$expect) {
-      if( defined ${$val} ) {
-          if( $type eq 'eq' ) {
-              # quote and force string context
-              ${$val} = "'${$val}'"
-          }
-          else {
-              # force numeric context
-              ${$val} = ${$val}+0;
-          }
-      }
-      else {
-          ${$val} = 'NULL';
-      }
+    unless( defined ${$val} ) {
+      ${$val} = 'NULL';
+      next;
+    }
+
+    if( $type eq 'eq' ) {
+      # quote and force string context
+      ${$val} = "'${$val}'";
+      next;
+    }
+
+    # otherwise force numeric context
+    ${$val} = ${$val}+0;
   }
 
   return sprintf <<"DIAGNOSTIC", $got, $expect;
