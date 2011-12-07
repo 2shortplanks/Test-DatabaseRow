@@ -13,7 +13,7 @@ BEGIN
   }
 }
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 use Test::Exception;
 
 use Test::DatabaseRow;
@@ -74,6 +74,10 @@ throws_ok { row_ok( sql   => "some sql",
 dies_ok { row_ok( dbh    => FakeDBI->new(fallover => 1, "hello" => "there"),
          	  sql    => "any old gumph",
 	          tests  => [ fooid => 1 ]) } "handles problems with sql";
+
+throws_ok { row_ok( db_results => [ { foo => "bar" } ],
+                    tests => { invalidop => { foo => 'bar' } } ) }
+  qr/Invalid operator test 'invalidop': \S+/, "invalid operator";
 
 ########################################################################
 # bad SQL

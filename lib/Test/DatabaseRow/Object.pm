@@ -184,7 +184,7 @@ sub _build_db_results {
 
   # load "Encode" if we need to do utf8 munging
   if ($self->force_utf8) {
-    require Encode
+    eval { require Encode; 1 }
       or croak "Can't load Encode, but force_utf8 is enabled";
   }
 
@@ -353,24 +353,34 @@ sub row_at_index_ok {
 
     # process each field in turn, sorted asciibetically
     foreach my $colname (sort keys %{$valuehash}) {
-      # work out what we expect
-      my $expect = $valuehash->{ $colname };
-      my $got    = $data->{ $colname };
 
+      # check the column we're comparing exists
       unless (exists($data->{ $colname })) {
         croak "No column '$colname' returned from table '@{[ $self->table ]}'"
           if $self->has_table;
         croak "No column '$colname' returned from sql";
       }
 
+
+
       # try the comparison
-      unless (do {
+      my $expect = $valuehash->{ $colname };
+      my $got    = $data->{ $colname };
+      my $passed;
+      {
         # disable warnings as we might compare undef
         local $SIG{__WARN__} = sub {}; # $^W not work
 
-        # do a string eval
-        eval "\$got $oper \$expect"
-      }) {
+        # do a string eval because $oper could be any
+        # arbitary comparison operator here.  Note the
+        # the use of backslashes here so that we create
+        # a string containing varaible names *not* the
+        # values.
+        eval "\$passed = \$got $oper \$expect; 1"
+          or croak "Invalid operator test '$oper': $@";
+      };
+
+      unless ($passed) {
         return $self->_fail(
           "While checking column '$colname' on $row_index_th row",
           ( $oper =~ /\A (?:eq|==) \z/x )
