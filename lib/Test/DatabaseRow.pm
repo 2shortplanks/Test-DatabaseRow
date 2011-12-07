@@ -12,7 +12,7 @@ use base qw(Exporter);
 our @EXPORT;
 
 use Carp qw(croak);
-our @CARP_OK = qw(Test::DatbaseRow TestDatabaseRow::Object);
+our @CARP_OK = qw(Test::DatabaseRow TestDatabaseRow::Object);
 
 # set the version number
 our $VERSION = "2.02";
