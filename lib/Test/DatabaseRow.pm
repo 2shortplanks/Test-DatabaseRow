@@ -15,10 +15,10 @@ use Carp qw(croak);
 our @CARP_OK = qw(Test::DatbaseRow TestDatabaseRow::Object);
 
 # set the version number
-our $VERSION = "2.01";
+our $VERSION = "2.02";
 
 use Test::DatabaseRow::Object;
-our $class = "Test::DatabaseRow::Object";
+our $object_class = "Test::DatabaseRow::Object";
 
 sub row_ok {
 
@@ -51,7 +51,7 @@ sub row_ok {
   $description = "simple db test" unless defined $description;
 
   # do the test
-  my $tbr = $class->new(%args);
+  my $tbr = $object_class->new(%args);
   my $tbr_result = $tbr->test_ok();
 
   # store the results of the database operation if needed
@@ -400,6 +400,7 @@ statement is executed.
 =head2 Convenience Functions  
 
 This module also exports a few convenience functions that make
+using certain features of C<row_ok> more straight forward.
 
 =over
 
@@ -572,7 +573,7 @@ RT system:
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-DatabaseRow>
 
 Alternatively, you can simply fork this project on github and
-send me pull requests.  Please see <http://github.com/2shortplanks/Test-DatabaseRow>
+send me pull requests.  Please see L<http://github.com/2shortplanks/Test-DatabaseRow>
 
 =head1 AUTHOR
 
