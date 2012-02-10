@@ -1,3 +1,9 @@
+2.03  Wrap qw() with () in foreach loops (thus avoiding deprecation
+      warnings on 5.14.  (Thanks to Gabor Szabo for pull request)
+
+      Fix tests to delete sqlite test database on Windows (Thanks
+      to Gabor Szabo for pull request)
+
 2.02  Changed "label" to "diagnostic" (but kept backwards compatible
       accepting of old object.)
 
