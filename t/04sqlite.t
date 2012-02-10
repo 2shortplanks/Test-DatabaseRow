@@ -25,7 +25,7 @@ my $dir = tempdir( CLEANUP => 1 );
 chdir($dir)
   or die "Can't change directory to temp dir";
 END {
-  chdir('..');
+  chdir('..');  # needed so deleting temp dir works on Windows
 }
 my $dbh = DBI->connect("dbi:SQLite:dbname=dbfile","","");
 
