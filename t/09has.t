@@ -10,7 +10,7 @@ BEGIN { use_ok "Test::DatabaseRow::Result" }
 
 {
 	my $tbr = Test::DatabaseRow::Object->new();
-	foreach my $field qw(
+	foreach my $field (qw(
     db_results
     sql_and_bind
     dbh
@@ -22,7 +22,7 @@ BEGIN { use_ok "Test::DatabaseRow::Result" }
     results
     max_results
     min_results		
-	) {
+	)) {
     my $method = "has_$field";
 		ok(!$tbr->$method, "hasn't $field")
 	}
@@ -43,7 +43,7 @@ BEGIN { use_ok "Test::DatabaseRow::Result" }
     max_results => 9,
     min_results => 9,  
   );
-  foreach my $field qw(
+  foreach my $field (qw(
     db_results
     sql_and_bind
     dbh
@@ -55,7 +55,7 @@ BEGIN { use_ok "Test::DatabaseRow::Result" }
     results
     max_results
     min_results   
-  ) {
+  )) {
     my $method = "has_$field";
     ok($tbr->$method, "has $field")
   }
@@ -64,10 +64,10 @@ BEGIN { use_ok "Test::DatabaseRow::Result" }
 
 {
   my $tbr = Test::DatabaseRow::Result->new();
-  foreach my $field qw(
+  foreach my $field (qw(
     is_error
     diag
-  ) {
+  )) {
     my $method = "has_$field";
     ok(!$tbr->$method, "hasn't $field")
   }
@@ -78,10 +78,10 @@ BEGIN { use_ok "Test::DatabaseRow::Result" }
     is_error => 0,
     diag => [],
   );
-  foreach my $field qw(
+  foreach my $field (qw(
     is_error
     diag
-  ) {
+  )) {
     my $method = "has_$field";
     ok($tbr->$method, "has $field")
   }
