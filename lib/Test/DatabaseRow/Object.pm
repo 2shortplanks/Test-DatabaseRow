@@ -25,6 +25,7 @@ use Test::DatabaseRow::Result;
 
 our %RE;
 unless (eval { require Regexp::Common; Regexp::Common->import; 1 }) {
+  ## no critic (ProhibitComplexRegexes)
   $RE{num}{real} = qr/
     (?:(?i)(?:[+-]?)(?:(?=[0123456789]|[.])
     (?:[0123456789]*)(?:(?:[.])(?:[0123456789]{0,}))?)
