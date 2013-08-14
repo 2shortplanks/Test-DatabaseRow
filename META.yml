@@ -3,12 +3,13 @@ abstract: 'simple database tests'
 author:
   - 'Written by Mark Fowler B<mark@twoshortplanks.com>'
 build_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.59
   Test::Builder::Tester: 0.09
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.59
 distribution_type: module
-generated_by: 'Module::Install version 1.00'
+dynamic_config: 1
+generated_by: 'Module::Install version 1.06'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -24,7 +25,10 @@ requires:
   Scalar::Util: 1.21
   perl: 5.6.0
 resources:
-  homepage: http://github.com/2shortplanks/Test-DatabaseRow/tree
+  homepage: https://github.com/2shortplanks/Test-DatabaseRow/tree
   license: http://dev.perl.org/licenses/
-  repository: git://github.com/2shortplanks/Test-DatabaseRow.git
+  repository:
+    type: git
+    url: git://github.com/2shortplanks/Test-DatabaseRow.git
+    web: https://github.com/2shortplanks/Test-DatabaseRow/tree
 version: 2.03
