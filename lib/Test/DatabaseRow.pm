@@ -30,12 +30,14 @@ sub row_ok {
   our $dbh;
   our $force_utf8;
   our $verbose;
+  our $verbose_data;
 
   # defaults
   my %args = (
     dbh => $dbh,
     force_utf8 => $force_utf8,
     verbose => $verbose || $ENV{TEST_DBROW_VERBOSE},
+    verbose_data => $verbose_data || $ENV{TEST_DBROW_VERBOSE_DATA},
     check_all_rows => 0,
   @_ );
 
