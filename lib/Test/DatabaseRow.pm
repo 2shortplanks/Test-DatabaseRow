@@ -307,9 +307,16 @@ against all rows returned from the database not just the first.
 
 Setting this option to a true value will cause verbose diagnostics to
 be printed out during any failing tests.  You may also enable this
-feature by setting either C<$Test::DatabaseRow::verbose> variable the
+feature by setting either C<$Test::DatabaseRow::verbose> variable or the
 C<TEST_DBROW_VERBOSE> environmental variable to a true value.
 
+=item verbose_data
+
+Setting this option to a true value will cause the results of running
+the SQL queries to be printed out during any failing tests.  You may
+also enable this feature by setting either
+C<$Test::DatabaseRow::verbose_data> variable or the
+C<TEST_DBROW_VERBOSE_DATA> environmental variable to a true value.
 =item store_rows
 
 Sometimes, it's not enough to just use the simple tests that

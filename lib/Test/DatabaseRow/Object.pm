@@ -14,6 +14,7 @@ use Carp qw(croak);
 our @CARP_NOT = qw(Test::DatabaseRow::Object);
 
 use Test::DatabaseRow::Result;
+use Test::Builder;
 
 # okay, try loading Regexp::Common
 
@@ -209,6 +210,27 @@ sub _build_db_results {
   return \@db_results;
 }
 
+# has db_results_dumped => ( is => "ro", lazy_build => 1 );
+sub db_results_dumped {
+  my $self = shift;
+  return $self->{db_results_dumped} ||= $self->_build_db_results_dumped;
+}
+sub has_db_results_dumped { my $self = shift; return exists $self->{db_results_dumped} }
+sub _build_db_results_dumped {
+  my $self = shift;
+
+  # get the results iff some was already fetched, otherwise we don't have any
+  my $results = $self->has_db_results ? $self->db_results : [];
+
+  my $builder = Test::Builder->new;
+  if ($builder->can("explain")) {
+    my ($str) = $builder->explain($results);
+    return $str;
+  }
+
+  croak "Cannot dump db results since the version of Test::Builder installed does not support 'explain'";
+}
+
 ## test related accessors ##############################################
 
 
@@ -290,6 +312,10 @@ sub has_min_results { my $self = shift; return exists $self->{min_results} }
 # has verbose => (is => 'ro', default => 0)
 sub verbose { my $self = shift;return $self->{verbose} || 0 }
 sub has_verbose { my $self = shift; return exists $self->{verbose} }
+
+# has verbose_data => (is => 'ro', default => 0)
+sub verbose_data { my $self = shift;return $self->{verbose_data} || 0 }
+sub has_verbose_data { my $self = shift; return exists $self->{verbose_data} }
 
 ########################################################################
 # methods
@@ -431,6 +457,12 @@ sub _fail {
 
       # include the SQL diagnostics if we're verbose
       ($self->verbose ? $self->_sql_diag : ()),
+
+      # include a dumper of the results if we're verbose_data
+      ($self->verbose_data ?
+        ("Data returned from the database:",$self->db_results_dumped)
+        : ()
+      ),
     ],
   );
 }
@@ -637,6 +669,12 @@ See L<Test::DatabaseRow/where> for a more detailed explanation.
 Truth value, default false.  Controls if the diagnostic messages
 printed during C<row_ok> on failure contain details of the SQL
 executed or not.
+
+=item verbose_data
+
+Truth value, default false.  Controls if the diagnostic messages
+printed during C<row_ok> on failure contain a Data::Dumper
+style dump of the resulting rows from the database.
 
 =item force_utf8
 
