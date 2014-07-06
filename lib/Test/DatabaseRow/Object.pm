@@ -613,6 +613,14 @@ If this accessor is not passed then it will be populated on
 first use by executing the contents of C<sql_and_bind> against the
 passed C<dbh>.
 
+=item db_results_dumped
+
+A string representation of the database results.
+
+If this accessor is not passed then it will be populated on
+first use by using Test::Builder's explain function on
+C<db_results>
+
 =item sql_and_bind
 
 The SQL and bind variables to execute if no results were passed
