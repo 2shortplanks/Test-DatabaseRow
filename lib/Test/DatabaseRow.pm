@@ -15,7 +15,7 @@ use Carp qw(croak);
 our @CARP_OK = qw(Test::DatabaseRow TestDatabaseRow::Object);
 
 # set the version number
-our $VERSION = "2.03";
+our $VERSION = "2.04";
 
 use Test::DatabaseRow::Object;
 our $object_class = "Test::DatabaseRow::Object";

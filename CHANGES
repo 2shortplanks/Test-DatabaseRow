@@ -1,3 +1,6 @@
+2.04  Add support to dump out the results from the database as
+      diagnosics with verbose_data / TEST_DBROW_VERBOSE_DATA
+
 2.03  Wrap qw() with () in foreach loops (thus avoiding deprecation
       warnings on 5.14.  (Thanks to Gabor Szabo for pull request)
 
