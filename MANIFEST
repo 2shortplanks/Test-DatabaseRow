@@ -17,6 +17,7 @@ MANIFEST			This list of files
 META.yml
 MYMETA.json
 MYMETA.yml
+README
 t/01basic.t
 t/01tests.t
 t/02throws.t
