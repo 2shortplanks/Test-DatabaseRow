@@ -591,6 +591,8 @@ send me pull requests.  Please see L<http://github.com/2shortplanks/Test-Databas
 
 Written by Mark Fowler B<mark@twoshortplanks.com>
 
+=head1 COPYRIGHT AND LICENSE
+
 Copyright Profero 2003, 2004.  Copyright Mark Fowler 2011.
 
 This program is free software; you can redistribute it and/or modify
