@@ -1,7 +1,7 @@
 {
-    "abstract": 'simple database tests',
+    "abstract": "simple database tests",
     "author": [
-        'Written by Mark Fowler B<mark@twoshortplanks.com>'
+        "Written by Mark Fowler B<mark@twoshortplanks.com>"
     ],
     "build_requires": {
         "ExtUtils::MakeMaker": "6.59",
@@ -12,8 +12,8 @@
     },
     "distribution_type": "module",
     "dynamic_config": "1",
-    "generated_by": 'Module::Install version 1.08',
-    "license": 'perl',
+    "generated_by": "Module::Install version 1.08",
+    "license": "perl",
     "meta-spec": {
         "url": "http://module-build.sourceforge.net/META-spec-v1.4.html",
         "version": "1.4"
@@ -36,5 +36,5 @@
         "license": "http://dev.perl.org/licenses/",
         "repository": "git://github.com/2shortplanks/Test-DatabaseRow.git"
     },
-    "version": '2.04'
+    "version": "2.04"
 }
